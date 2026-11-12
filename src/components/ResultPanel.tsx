@@ -1,0 +1,7 @@
+import { ArrowUpRight, CircleCheck, ReceiptText } from 'lucide-react';
+import type { PricingResult } from '../lib/pricing';
+const money=(n:number)=>n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+export default function ResultPanel({productName,result}:{productName:string;result:PricingResult|null}) {
+ if(result?.error)return <section className="error" role="alert"><strong>Vamos ajustar os valores?</strong><p>{result.error}</p></section>;
+ return <section className="result" aria-live="polite"><div className="result-top"><span className="eyebrow"><span className="dot"/> {result?'SEU PREÇO ESTÁ PRONTO':'SEU RESULTADO'}</span><ArrowUpRight size={23}/></div><p className="product">{productName||'Preço de venda sugerido'}</p><div className={'price '+(!result?'muted':'')}>{result?money(result.price):'R$ —'}</div><p className="result-caption">{result?'por unidade · com sua margem incluída':'Preencha os custos para descobrir seu preço'}</p><div className="breakdown"><div><span>Custo total</span><strong>{result?money(result.cost):'—'}</strong></div><div><span>Taxa do cartão</span><strong>{result?money(result.fee):'—'}</strong></div><div className="profit"><span>Seu lucro por venda</span><strong>{result?money(result.profit):'—'}</strong></div></div><div className="result-foot">{result?<CircleCheck size={15}/>:<ReceiptText size={15}/>}<span>{result?`Margem de ${result.margin.toLocaleString('pt-BR')}% sobre o preço de venda`:'O resultado aparece enquanto você digita'}</span></div></section>
+}
