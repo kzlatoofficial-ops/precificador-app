@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Custos</title>
+<style>
+  * { box-sizing: border-box }
+  body { margin: 0; background: #f7f9f8; color: #192f2c; font: 16px/1.5 Inter, system-ui, sans-serif }
+  main { max-width: 1040px; margin: auto; padding: 32px 20px 56px }
+  a { color: #08634f; font-weight: 650; text-underline-offset: 4px }
+  h1 { margin: 22px 0 4px; font-size: clamp(28px, 5vw, 42px); line-height: 1.15; letter-spacing: -.04em }
+  h2 { font-size: 20px; margin: 0 0 4px }
+  p { margin: 0 0 16px; color: #425c52 }
+  .layout { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; align-items: start; margin-top: 24px }
+  section, aside { background: #fff; border: 1px solid #e3e9e5; border-radius: 18px; padding: 22px }
+  section + section { margin-top: 16px }
+  aside { position: sticky; top: 20px }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+  label { display: block; font-weight: 620 }
+  small { display: block; font-weight: 400; color: #425c52 }
+  input { min-width: 0; width: 100%; margin-top: 5px; border: 1px solid #a6b9af; border-radius: 10px; padding: 10px 12px; color: inherit; background: white; font: inherit }
+  input[aria-invalid=true] { border-color: #a61b29 }
+  .total { background: #eaf3ee; border-radius: 12px; padding: 16px; margin: 12px 0 }
+  output { display: block; font-size: clamp(25px, 4vw, 36px); color: #073e32; font-weight: 750; overflow-wrap: anywhere }
+  dl { margin: 16px 0 }
+  dl div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #dbe2ee }
+  dd { margin: 0; text-align: right; overflow-wrap: anywhere }
+  #status { margin: 12px 0 0 }
+  @media(max-width: 720px) { .layout { grid-template-columns: 1fr } aside { position: static } }
+  @media(max-width: 430px) { .fields { grid-template-columns: 1fr } section, aside { padding: 16px } }
+</style>
+<main>
+  <a href="./">← Voltar à calculadora de preço</a>
+  <h1>Quanto custa meu produto?</h1>
+  <p>Some o que você gasta para ter o produto pronto e descubra quanto custa cada unidade.</p>
+  <div class="layout">
+    <form id="costs">
+      <section>
+        <h2>Gastos do produto</h2>
+        <p>Use uma unidade ou um lote inteiro. Preencha todos os valores pensando na mesma quantidade.</p>
+        <div class="fields">
+          <label>Unidades prontas para vender<input id="units" inputmode="numeric" value="1"><small>Se fez 20 unidades e perdeu 2, informe 18.</small></label>
+          <label>Produto ou materiais (R$)<input id="materials" inputmode="decimal" placeholder="0,00"><small>Valor da compra para revenda ou dos ingredientes e materiais usados.</small></label>
+          <label>Embalagem (R$)<input id="packaging" inputmode="decimal" placeholder="0,00"><small>Caixas, sacolas, etiquetas e lacres.</small></label>
+          <label>Tempo de produção (R$)<input id="labor" inputmode="decimal" placeholder="0,00"><small>Inclua seu tempo. Se gastou 2 horas a R$ 20 por hora, informe R$ 40.</small></label>
+          <label>Frete e outros gastos (R$)<input id="other" inputmode="decimal" placeholder="0,00"><small>Frete dos materiais, impostos da compra que você paga ou gás usado no lote.</small></label>
+        </div>
+      </section>
+      <section>
+        <h2>Contas do negócio <small>Opcional</small></h2>
+        <p>Pode estimar. Some as contas que você paga todo mês, inclusive as que mudam de valor. Use uma média para luz e água. Conte cada gasto uma vez.</p>
+        <div class="fields">
+          <label>Contas por mês (R$)<input id="monthly" inputmode="decimal" placeholder="0,00"><small>Aluguel, internet, luz, água e assinaturas, por exemplo.</small></label>
+          <label>Unidades vendidas por mês<input id="monthlyUnits" inputmode="numeric" placeholder="Ex. 100"><small>Se os produtos usam a estrutura de forma parecida, some as vendas de todos eles. Se os gastos variam muito entre produtos, estime as contas e as vendas só deste produto.</small></label>
+        </div>
+      </section>
+    </form>
+    <aside aria-label="Resumo dos custos">
+      <h2>Resumo dos custos</h2>
+      <div class="total">
+        Custo estimado por unidade
+        <output id="unitCost" form="costs">—</output>
+      </div>
+      <dl>
+        <div><dt>Gastos diretos por unidade</dt><dd id="direct">—</dd></div>
+        <div><dt>Contas mensais por unidade</dt><dd id="overhead">—</dd></div>
+        <div><dt>Custo total da quantidade informada</dt><dd id="batch">—</dd></div>
+      </dl>
+      <p>Para definir o preço de venda, considere também as taxas que dependem da venda, como as da maquininha ou do marketplace.</p>
+      <p id="status" role="status"></p>
+    </aside>
+  </div>
+</main>
+<script>
+  const byId = (id) => document.getElementById(id);
+  const fields = ['units', 'materials', 'packaging', 'labor', 'other', 'monthly', 'monthlyUnits'];
+  const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  function readNumber(id, whole = false) {
+    const input = byId(id);
+    const raw = input.value.trim();
+    const pattern = whole ? /^\d+$/ : /^(?:\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)$/;
+    const normalized = raw.includes(',') || /\.\d{3}(?:\.|$)/.test(raw)
+      ? raw.replaceAll('.', '').replace(',', '.')
+      : raw;
+    const value = raw ? Number(normalized) : 0;
+    const valid = (!raw || pattern.test(raw)) && Number.isFinite(value) && value <= Number.MAX_SAFE_INTEGER;
+    input.setAttribute('aria-invalid', String(!valid));
+    return valid ? value : NaN;
+  }
+
+  function update() {
+    const values = fields.map((id) => readNumber(id, id === 'units' || id === 'monthlyUnits'));
+    const [units, materials, packaging, labor, other, monthly, monthlyUnits] = values;
+    const invalid = values.some(Number.isNaN);
+    const needsMonthlyUnits = monthly > 0 && monthlyUnits === 0;
+    if (units === 0) byId('units').setAttribute('aria-invalid', 'true');
+    if (needsMonthlyUnits) byId('monthlyUnits').setAttribute('aria-invalid', 'true');
+
+    const message = invalid ? 'Confira os campos destacados. Use valores positivos e quantidades inteiras.'
+      : units === 0 ? 'Informe pelo menos uma unidade pronta para vender.'
+      : needsMonthlyUnits ? 'Informe as unidades vendidas por mês para dividir as contas mensais.'
+      : '';
+    byId('status').textContent = message;
+
+    const direct = (materials + packaging + labor + other) / units;
+    const overhead = monthly > 0 ? monthly / monthlyUnits : 0;
+    const unitCost = direct + overhead;
+    const results = { direct, overhead, unitCost, batch: unitCost * units };
+    for (const [id, value] of Object.entries(results)) {
+      byId(id).textContent = message ? '—' : currency.format(value);
+    }
+  }
+
+  byId('costs').addEventListener('input', update);
+  byId('costs').addEventListener('submit', (event) => event.preventDefault());
+  update();
+</script>
+</html>
