@@ -1,79 +1,116 @@
 <!doctype html>
 <html lang="pt-BR">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calculadora de Custos</title>
-<style>
-  * { box-sizing: border-box }
-  body { margin: 0; background: #f7f9f8; color: #192f2c; font: 16px/1.5 Inter, system-ui, sans-serif }
-  main { max-width: 1040px; margin: auto; padding: 32px 20px 56px }
-  a { color: #08634f; font-weight: 650; text-underline-offset: 4px }
-  h1 { margin: 22px 0 4px; font-size: clamp(28px, 5vw, 42px); line-height: 1.15; letter-spacing: -.04em }
-  h2 { font-size: 20px; margin: 0 0 4px }
-  p { margin: 0 0 16px; color: #425c52 }
-  .layout { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; align-items: start; margin-top: 24px }
-  section, aside { background: #fff; border: 1px solid #e3e9e5; border-radius: 18px; padding: 22px }
-  section + section { margin-top: 16px }
-  aside { position: sticky; top: 20px }
-  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
-  label { display: block; font-weight: 620 }
-  small { display: block; font-weight: 400; color: #425c52 }
-  input { min-width: 0; width: 100%; margin-top: 5px; border: 1px solid #a6b9af; border-radius: 10px; padding: 10px 12px; color: inherit; background: white; font: inherit }
-  input[aria-invalid=true] { border-color: #a61b29 }
-  .total { background: #eaf3ee; border-radius: 12px; padding: 16px; margin: 12px 0 }
-  output { display: block; font-size: clamp(25px, 4vw, 36px); color: #073e32; font-weight: 750; overflow-wrap: anywhere }
-  dl { margin: 16px 0 }
-  dl div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #dbe2ee }
-  dd { margin: 0; text-align: right; overflow-wrap: anywhere }
-  #status { margin: 12px 0 0 }
-  @media(max-width: 720px) { .layout { grid-template-columns: 1fr } aside { position: static } }
-  @media(max-width: 430px) { .fields { grid-template-columns: 1fr } section, aside { padding: 16px } }
-</style>
-<main>
-  <a href="./">← Voltar à calculadora de preço</a>
-  <h1>Quanto custa meu produto?</h1>
-  <p>Some o que você gasta para ter o produto pronto e descubra quanto custa cada unidade.</p>
-  <div class="layout">
-    <form id="costs">
-      <section>
-        <h2>Gastos do produto</h2>
-        <p>Use uma unidade ou um lote inteiro. Preencha todos os valores pensando na mesma quantidade.</p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custo do produto | Calculadora de Preço</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Manrope:wght@700;800&amp;display=swap">
+  <style>
+    * { box-sizing: border-box }
+    body { margin: 0; background: #f7f9f8; color: #192f2c; font: 16px/1.5 'DM Sans', system-ui, sans-serif }
+    header { min-height: 88px; display: flex; align-items: center; padding: 16px max(6vw, 24px); background: #fff; border-bottom: 1px solid #e7ece9 }
+    .brand { display: inline-flex; gap: 12px; align-items: center; color: inherit; text-decoration: none; font: 800 19px Manrope, system-ui, sans-serif; letter-spacing: -.5px }
+    .logo { display: grid; place-items: center; width: 43px; height: 43px; color: white; background: #07836a; border-radius: 13px }
+    main { max-width: 1080px; padding: 36px 26px 56px; margin: auto }
+    .back { display: inline-flex; align-items: center; min-height: 44px; color: #08634f; font-size: 14px; font-weight: 700; text-underline-offset: 4px }
+    .intro { text-align: center; margin: 16px 0 37px }
+    h1, h2, output { font-family: Manrope, system-ui, sans-serif }
+    h1 { font-size: clamp(30px, 5vw, 40px); line-height: 1.2; letter-spacing: -.04em; margin: 0 0 12px }
+    h1 span { color: #07775f }
+    h2 { font-size: 19px; letter-spacing: -.025em; margin: 0 0 6px }
+    p { margin: 0; color: #52675e; font-size: 14px }
+    .workspace { display: grid; grid-template-columns: 1.16fr 1fr; gap: 24px; align-items: start }
+    .form-card, .result { min-width: 0; border-radius: 20px; padding: 29px }
+    .form-card { background: white; border: 1px solid #e3e9e5; box-shadow: 0 7px 24px #273b2910 }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px }
+    label { display: block; font-size: 13px; font-weight: 700 }
+    input { width: 100%; min-height: 47px; margin-top: 8px; border: 1px solid #cdd9d1; border-radius: 9px; background: #fcfdfc; color: #253e33; padding: 10px 13px; font: 400 16px 'DM Sans', system-ui, sans-serif }
+    input:focus { outline: 2px solid #07836a; outline-offset: 1px }
+    input[aria-invalid="true"] { border-color: #af2937 }
+    small { display: block; margin-top: 8px; font-size: 12px; font-weight: 400; color: #52675e }
+    details { margin-top: 23px; border-top: 1px solid #e7ece9; padding-top: 8px }
+    summary { padding: 12px 0; color: #08634f; font-size: 14px; font-weight: 700; cursor: pointer }
+    details .fields { margin-top: 14px }
+    .result { background: #073e32 radial-gradient(ellipse at 100% 0%, #17664c80, transparent 70%); color: #f3faf6; box-shadow: 0 8px 20px #073e3215 }
+    output { display: block; margin: 12px 0 20px; font-size: clamp(30px, 5vw, 45px); line-height: 1.2; font-weight: 800; letter-spacing: -.035em; overflow-wrap: anywhere }
+    dl { margin: 0; border-top: 1px solid #ffffff30; padding-top: 9px }
+    dl div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; font-size: 13px; color: #c3dfd1 }
+    dl div[hidden] { display: none }
+    dd { min-width: 0; margin: 0; text-align: right; font-weight: 700; color: #f3faf6; overflow-wrap: anywhere }
+    #status { color: #9f2330; margin-top: 12px }
+    #status:empty { display: none }
+    :focus-visible { outline: 2px solid #07836a; outline-offset: 4px }
+    @media (max-width: 700px) {
+      header { min-height: 74px }
+      main { padding: 20px 18px 36px }
+      .intro { margin-bottom: 27px }
+      .workspace { grid-template-columns: 1fr; gap: 18px }
+      .form-card, .result { padding: 22px; border-radius: 18px }
+    }
+    @media (max-width: 380px) {
+      .fields { grid-template-columns: 1fr; gap: 14px }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="./">
+      <span class="logo" aria-hidden="true">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="5" y="3" width="14" height="18" rx="2"/>
+          <path d="M9 7h6m-6 4h.01m5.99 0h.01M9 15h.01m5.99 0h.01M9 18h.01m5.99 0h.01"/>
+        </svg>
+      </span>
+      Calculadora de Preço
+    </a>
+  </header>
+  <main>
+    <a class="back" href="./">← Voltar à calculadora de preço</a>
+    <div class="intro">
+      <h1>Quanto custa <span>meu produto?</span></h1>
+      <p>Descubra quanto você gasta por unidade, mesmo quando compra ou produz em lote.</p>
+    </div>
+    <div class="workspace">
+      <form id="costs" class="form-card" aria-labelledby="cost-heading">
+        <h2 id="cost-heading">Gastos do produto</h2>
+        <p>Informe o gasto para a mesma quantidade de unidades.</p>
         <div class="fields">
-          <label>Unidades prontas para vender<input id="units" inputmode="numeric" value="1"><small>Se fez 20 unidades e perdeu 2, informe 18.</small></label>
-          <label>Produto ou materiais (R$)<input id="materials" inputmode="decimal" placeholder="0,00"><small>Valor da compra para revenda ou dos ingredientes e materiais usados.</small></label>
-          <label>Embalagem (R$)<input id="packaging" inputmode="decimal" placeholder="0,00"><small>Caixas, sacolas, etiquetas e lacres.</small></label>
-          <label>Tempo de produção (R$)<input id="labor" inputmode="decimal" placeholder="0,00"><small>Inclua seu tempo. Se gastou 2 horas a R$ 20 por hora, informe R$ 40.</small></label>
-          <label>Frete e outros gastos (R$)<input id="other" inputmode="decimal" placeholder="0,00"><small>Frete dos materiais, impostos da compra que você paga ou gás usado no lote.</small></label>
+          <label>Gasto direto total (R$)
+            <input id="expenses" inputmode="decimal" placeholder="0,00" aria-describedby="expenses-help">
+            <small id="expenses-help">Some produto ou materiais, embalagem, mão de obra e frete.</small>
+          </label>
+          <label>Unidades prontas para vender
+            <input id="units" inputmode="numeric" value="1">
+          </label>
         </div>
-      </section>
-      <section>
-        <h2>Contas do negócio <small>Opcional</small></h2>
-        <p>Pode estimar. Some as contas que você paga todo mês, inclusive as que mudam de valor. Use uma média para luz e água. Conte cada gasto uma vez.</p>
-        <div class="fields">
-          <label>Contas por mês (R$)<input id="monthly" inputmode="decimal" placeholder="0,00"><small>Aluguel, internet, luz, água e assinaturas, por exemplo.</small></label>
-          <label>Unidades vendidas por mês<input id="monthlyUnits" inputmode="numeric" placeholder="Ex. 100"><small>Se os produtos usam a estrutura de forma parecida, some as vendas de todos eles. Se os gastos variam muito entre produtos, estime as contas e as vendas só deste produto.</small></label>
-        </div>
-      </section>
-    </form>
-    <aside aria-label="Resumo dos custos">
-      <h2>Resumo dos custos</h2>
-      <div class="total">
-        Custo estimado por unidade
-        <output id="unitCost" form="costs">—</output>
-      </div>
-      <dl>
-        <div><dt>Gastos diretos por unidade</dt><dd id="direct">—</dd></div>
-        <div><dt>Contas mensais por unidade</dt><dd id="overhead">—</dd></div>
-        <div><dt>Custo total da quantidade informada</dt><dd id="batch">—</dd></div>
-      </dl>
-      <p>Para definir o preço de venda, considere também as taxas que dependem da venda, como as da maquininha ou do marketplace.</p>
-      <p id="status" role="status"></p>
-    </aside>
-  </div>
-</main>
-<script>
+        <details>
+          <summary>Adicionar contas mensais</summary>
+          <p>As contas são divididas pelas unidades que você vende por mês.</p>
+          <div class="fields">
+            <label>Contas por mês (R$)
+              <input id="monthly" inputmode="decimal" placeholder="0,00">
+            </label>
+            <label>Unidades vendidas por mês
+              <input id="monthlyUnits" inputmode="numeric" placeholder="Ex. 100">
+            </label>
+          </div>
+        </details>
+        <p id="status" role="status"></p>
+      </form>
+      <aside class="result" aria-labelledby="total-heading">
+        <h2 id="total-heading">Custo estimado por unidade</h2>
+        <output id="unitCost" form="costs" for="expenses units monthly monthlyUnits" aria-labelledby="total-heading">—</output>
+        <dl>
+          <div><dt>Gasto direto por unidade</dt><dd id="direct">—</dd></div>
+          <div id="overhead-row" hidden><dt>Contas mensais por unidade</dt><dd id="overhead">—</dd></div>
+          <div id="batch-row" hidden><dt>Custo total do lote</dt><dd id="batch">—</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </main>
+  <script>
   const byId = (id) => document.getElementById(id);
-  const fields = ['units', 'materials', 'packaging', 'labor', 'other', 'monthly', 'monthlyUnits'];
+  const fields = ['expenses', 'units', 'monthly', 'monthlyUnits'];
   const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   function readNumber(id, whole = false) {
@@ -91,29 +128,35 @@
 
   function update() {
     const values = fields.map((id) => readNumber(id, id === 'units' || id === 'monthlyUnits'));
-    const [units, materials, packaging, labor, other, monthly, monthlyUnits] = values;
+    const [expenses, units, monthly, monthlyUnits] = values;
     const invalid = values.some(Number.isNaN);
     const needsMonthlyUnits = monthly > 0 && monthlyUnits === 0;
+
     if (units === 0) byId('units').setAttribute('aria-invalid', 'true');
     if (needsMonthlyUnits) byId('monthlyUnits').setAttribute('aria-invalid', 'true');
 
     const message = invalid ? 'Confira os campos destacados. Use valores positivos e quantidades inteiras.'
       : units === 0 ? 'Informe pelo menos uma unidade pronta para vender.'
-      : needsMonthlyUnits ? 'Informe as unidades vendidas por mês para dividir as contas mensais.'
+      : needsMonthlyUnits ? 'Informe quantas unidades você vende por mês.'
       : '';
     byId('status').textContent = message;
 
-    const direct = (materials + packaging + labor + other) / units;
+    const hasCosts = byId('expenses').value.trim() !== '' || monthly > 0;
+    const direct = expenses / units;
     const overhead = monthly > 0 ? monthly / monthlyUnits : 0;
     const unitCost = direct + overhead;
     const results = { direct, overhead, unitCost, batch: unitCost * units };
+
+    byId('overhead-row').hidden = !(monthly > 0);
+    byId('batch-row').hidden = !(units > 1);
     for (const [id, value] of Object.entries(results)) {
-      byId(id).textContent = message ? '—' : currency.format(value);
+      byId(id).textContent = message || !hasCosts ? '—' : currency.format(value);
     }
   }
 
   byId('costs').addEventListener('input', update);
   byId('costs').addEventListener('submit', (event) => event.preventDefault());
   update();
-</script>
+  </script>
+</body>
 </html>
